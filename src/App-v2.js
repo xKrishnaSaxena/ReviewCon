@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 import StarRating from "./StarRating";
-import { useLocalStorageState } from "./useLocalStorageState";
-import { useKey } from "./useKey";
-import { useRef } from "react";
 
 const KEY = "112948db";
 
@@ -11,20 +8,12 @@ const average = (arr) =>
 
 export default function App() {
   //STRUCTURAL COMPONENT
-  // const [watched, setWatched] = useState([]);
-
+  const [watched, setWatched] = useState([]);
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-
-  const [watched, setWatched] = useLocalStorageState([], "watched");
-
-  // const [watched, setWatched] = useState(function () {
-  //   const storedValue = localStorage.getItem("watched");
-  //   return JSON.parse(storedValue);
-  // });
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id)); //This will act as if we double click the list item present on the movie list then it will close the details that will be displaying about the movie in the box
@@ -36,7 +25,6 @@ export default function App() {
 
   function handleAddWatched(movie) {
     setWatched((watched) => [...watched, movie]);
-    // localStorage.setItem('watched',JSON.stringify([...watched,movie]));
   }
 
   function handleDeleteWatched(id) {
@@ -91,6 +79,16 @@ export default function App() {
         <NumResults movies={movies} />
       </NavBar>
       <Main>
+        {/* <Box element={<List movies={movies} />} />
+          <Box
+            element={
+              <>
+                <Summary watched={watched} />
+                <WatchedMoviesList watched={watched} />
+              </>
+            }
+          // /> */}
+        {/* ALTERNATE WAY TO DO */}
         <Box>
           {isLoading && <Loader />}
           {!isLoading && !error && (
@@ -145,14 +143,6 @@ function Logo() {
 function Search({ query, setQuery }) {
   //STATEFUL COMPONENT
 
-  const inputEl = useRef(null);
-
-  useKey("Enter", function () {
-    if (document.activeElement === inputEl.current) return;
-    inputEl.current.focus();
-    setQuery("");
-  });
-
   return (
     <input
       className="search"
@@ -160,7 +150,6 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
-      ref={inputEl}
     />
   );
 }
@@ -193,7 +182,28 @@ function Box({ children }) {
     </div>
   );
 }
+// function Box2() {
+//   //STATEFUL COMPONENT
+//   const [isOpen2, setIsOpen2] = useState(true);
+//   const [watched, setWatched] = useState(tempWatchedData);
 
+//   return (
+//     <div className="box">
+//       <button
+//         className="btn-toggle"
+//         onClick={() => setIsOpen2((open) => !open)}
+//       >
+//         {isOpen2 ? "–" : "+"}
+//       </button>
+//       {isOpen2 && (
+//         <>
+//           <Summary watched={watched} />
+//           <WatchedMoviesList watched={watched} />
+//         </>
+//       )}
+//     </div>
+//   );
+// }
 function List({ movies, onSelectMovie }) {
   //STATEFUL COMPONENT
 
@@ -337,7 +347,21 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onCloseMovie();
   }
 
-  useKey("Escape", onCloseMovie);
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
 
   useEffect(
     function () {
